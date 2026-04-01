@@ -10,7 +10,8 @@
     };
   };
 
-  outputs = inputs@{ flake-parts, ... }:
+  outputs =
+    inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         inputs.git-hooks-nix.flakeModule
@@ -23,54 +24,56 @@
         "aarch64-darwin"
       ];
 
-      perSystem = { config, pkgs, ... }: let
-        mcp-unreal = pkgs.buildGoModule rec {
-          pname = "mcp-unreal";
-          version = "0.0.0";
+      perSystem =
+        { config, pkgs, ... }:
+        let
+          mcp-unreal = pkgs.buildGoModule rec {
+            pname = "mcp-unreal";
+            version = "0.0.0";
 
-          src = pkgs.fetchFromGitHub {
-            owner = "remiphilippe";
-            repo = "mcp-unreal";
-            rev = "main";
-            hash = "sha256-qmZ7SJ8UA+lqlX4vmuc5Lwpkv7H5N6sbCt75lltHnI4=";
+            src = pkgs.fetchFromGitHub {
+              owner = "remiphilippe";
+              repo = "mcp-unreal";
+              rev = "main";
+              hash = "sha256-qmZ7SJ8UA+lqlX4vmuc5Lwpkv7H5N6sbCt75lltHnI4=";
+            };
+
+            vendorHash = "sha256-Zy/vHRTRMtP1BGJ1UQF4vlmOClaLrV1wWCKTt/i/Unc=";
+
+            ldflags = [
+              "-s"
+              "-w"
+              "-X=main.version=${version}"
+            ];
+
+            meta = {
+              description = "MCP server for Unreal Engine 5.7";
+              homepage = "https://github.com/remiphilippe/mcp-unreal";
+              license = pkgs.lib.licenses.asl20;
+              mainProgram = "mcp-unreal";
+            };
+          };
+        in
+        {
+          packages = {
+            inherit mcp-unreal;
+            default = mcp-unreal;
           };
 
-          vendorHash = "sha256-Zy/vHRTRMtP1BGJ1UQF4vlmOClaLrV1wWCKTt/i/Unc=";
+          formatter = pkgs.nixfmt-classic;
 
-          ldflags = [
-            "-s"
-            "-w"
-            "-X=main.version=${version}"
-          ];
+          pre-commit.settings.hooks = {
+            nixfmt.enable = true;
+            deadnix.enable = true;
+            statix.enable = true;
+          };
 
-          meta = {
-            description = "MCP server for Unreal Engine 5.7";
-            homepage = "https://github.com/remiphilippe/mcp-unreal";
-            license = pkgs.lib.licenses.asl20;
-            mainProgram = "mcp-unreal";
+          devShells.default = pkgs.mkShell {
+            shellHook = ''
+              ${config.pre-commit.shellHook}
+            '';
+            packages = config.pre-commit.settings.enabledPackages;
           };
         };
-      in
-      {
-        packages = {
-          inherit mcp-unreal;
-          default = mcp-unreal;
-        };
-
-        formatter = pkgs.nixfmt-classic;
-
-        pre-commit.settings.hooks = {
-          nixfmt.enable = true;
-          deadnix.enable = true;
-          statix.enable = true;
-        };
-
-        devShells.default = pkgs.mkShell {
-          shellHook = ''
-            ${config.pre-commit.shellHook}
-          '';
-          packages = config.pre-commit.settings.enabledPackages;
-        };
-      };
     };
 }

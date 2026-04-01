@@ -4,13 +4,26 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    git-hooks-nix = {
+      url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      imports = [
+        inputs.git-hooks-nix.flakeModule
+      ];
 
-      perSystem = { pkgs, system, ... }: let
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
+
+      perSystem = { config, pkgs, ... }: let
         mcp-unreal = pkgs.buildGoModule rec {
           pname = "mcp-unreal";
           version = "0.0.0";
@@ -19,7 +32,6 @@
             owner = "remiphilippe";
             repo = "mcp-unreal";
             rev = "main";
-            # Hash placeholder - run `nix hash to-sri --type sha256 <path>` after first build failure to get actual hash
             hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
           };
 
@@ -33,14 +45,31 @@
 
           meta = {
             description = "MCP server for Unreal Engine 5.7";
-            platforms = pkgs.lib.platforms.unix;
+            homepage = "https://github.com/remiphilippe/mcp-unreal";
+            license = pkgs.lib.licenses.asl20;
             mainProgram = "mcp-unreal";
           };
         };
-      in {
+      in
+      {
         packages = {
           inherit mcp-unreal;
           default = mcp-unreal;
+        };
+
+        formatter = pkgs.nixfmt-classic;
+
+        pre-commit.settings.hooks = {
+          nixfmt.enable = true;
+          deadnix.enable = true;
+          statix.enable = true;
+        };
+
+        devShells.default = pkgs.mkShell {
+          shellHook = ''
+            ${config.pre-commit.shellHook}
+          '';
+          packages = config.pre-commit.settings.enabledPackages;
         };
       };
     };

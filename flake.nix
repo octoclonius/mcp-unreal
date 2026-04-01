@@ -32,10 +32,10 @@
             owner = "remiphilippe";
             repo = "mcp-unreal";
             rev = "main";
-            hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+            hash = "sha256-qmZ7SJ8UA+lqlX4vmuc5Lwpkv7H5N6sbCt75lltHnI4=";
           };
 
-          vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+          vendorHash = "sha256-Zy/vHRTRMtP1BGJ1UQF4vlmOClaLrV1wWCKTt/i/Unc=";
 
           ldflags = [
             "-s"
